@@ -1,7 +1,5 @@
-import 'package:dynamic_notch/dynamic_notch.dart';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
-import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -43,7 +41,6 @@ class NativeService with TrayListener, WindowListener {
   bool _escapeRegistered = false;
   bool _summonRegistered = false;
   bool _hasEngaged = false;
-  String _trayTitle = '';
   DateTime _suppressBlurUntil = DateTime.fromMillisecondsSinceEpoch(0);
 
   Future<void> init() async {
@@ -81,12 +78,6 @@ class NativeService with TrayListener, WindowListener {
     ]));
   }
 
-  Future<void> setTrayTitle(String title) async {
-    if (title == _trayTitle) return;
-    _trayTitle = title;
-    await trayManager.setTitle(title);
-  }
-
   void _suppressBlur() {
     // Avoid an instant hide-on-blur race right after summoning the panel.
     _suppressBlurUntil = DateTime.now().add(const Duration(milliseconds: 600));
@@ -107,60 +98,10 @@ class NativeService with TrayListener, WindowListener {
     } catch (_) {}
   }
 
-  // --- Dynamic Island / notch (via the dynamic_notch package) ---
-  final DynamicNotch _notch = DynamicNotch();
-  bool _notchOn = false;
-
-  /// Toggle notch mode: raise the window above the menu bar and hug the notch,
-  /// or restore. Wired to the `:notch` command while we prototype.
-  Future<void> toggleNotch() async {
-    _notchOn = !_notchOn;
-    try {
-      if (_notchOn) {
-        // Stand window_manager's .floating level down so the package's
-        // .screenSaver level (above the menu bar) can actually hold.
-        await windowManager.setAlwaysOnTop(false);
-        await _notch.enable();
-      } else {
-        await _notch.disable();
-        await windowManager.setAlwaysOnTop(true);
-      }
-    } catch (_) {}
-  }
-
   Future<void> reveal() async {
     _suppressBlur();
-    // Positioning happens natively in showPanel (reliable on multi-monitor);
-    // the Dart screen_retriever path drifted and landed on the built-in display.
+    // Positioning happens natively in showPanel (reliable on multi-monitor).
     await showPanel();
-  }
-
-  /// Anchor the panel just under the menu bar (top-centre) of whichever display
-  /// holds the cursor, so it drops down from the menu bar. Falls back to
-  /// centring if display info isn't available.
-  Future<void> positionOnActiveScreen() async {
-    const w = 540.0;
-    const topGap = 0.0; // hug the menu bar
-    try {
-      final cursor = await screenRetriever.getCursorScreenPoint();
-      final displays = await screenRetriever.getAllDisplays();
-      var target = await screenRetriever.getPrimaryDisplay();
-      for (final d in displays) {
-        final pos = d.visiblePosition ?? Offset.zero;
-        final size = d.visibleSize ?? d.size;
-        if (Rect.fromLTWH(pos.dx, pos.dy, size.width, size.height).contains(cursor)) {
-          target = d;
-          break;
-        }
-      }
-      final vp = target.visiblePosition ?? Offset.zero;
-      final vs = target.visibleSize ?? target.size;
-      await windowManager.setPosition(
-        Offset(vp.dx + (vs.width - w) / 2, vp.dy + topGap),
-      );
-    } catch (_) {
-      await windowManager.center();
-    }
   }
 
   Future<void> hide() => windowManager.hide();

@@ -94,7 +94,7 @@ class _Panel extends StatelessWidget {
       ),
     );
     if (reduceMotion) return panel;
-    // Drop from the menu bar and expand from the top-centre, Dynamic Island style.
+    // Drop from the menu bar and expand from the top-centre.
     return panel
         .animate()
         .fadeIn(duration: 140.ms)

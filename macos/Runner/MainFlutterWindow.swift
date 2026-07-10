@@ -4,6 +4,7 @@ import FlutterMacOS
 class MainFlutterWindow: NSWindow {
   // Retained: it owns the menu-bar items and the Pigeon host handler.
   private var host: VimerHost?
+  private var clickMonitor: Any?
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -35,6 +36,15 @@ class MainFlutterWindow: NSWindow {
     // signal (window-blur is flaky for an always-on-top / all-Spaces panel).
     NotificationCenter.default.addObserver(
       forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
+    ) { _ in
+      flutterApi.onResignActive { _ in }
+    }
+
+    // A click in any other app also dismisses the panel. Global monitors only
+    // see events outside our app and need no Accessibility permission, so this
+    // is the reliable "click away" signal when didResignActive does not fire.
+    clickMonitor = NSEvent.addGlobalMonitorForEvents(
+      matching: [.leftMouseDown, .rightMouseDown]
     ) { _ in
       flutterApi.onResignActive { _ in }
     }
@@ -125,7 +135,10 @@ final class MenuBarTimers: NSObject {
           .font: NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold),
         ])
     }
-    for (id, item) in items where !seen.contains(id) {
+    // Iterate a filtered copy: removing from `items` while iterating it directly
+    // mutates the collection mid-loop.
+    let stale = items.filter { !seen.contains($0.key) }
+    for (id, item) in stale {
       NSStatusBar.system.removeStatusItem(item)
       items.removeValue(forKey: id)
     }

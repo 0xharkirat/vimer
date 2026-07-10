@@ -138,7 +138,10 @@ DateTime? _clockTime(String raw, DateTime now) {
 
 DateTime _nextAt(DateTime now, int hour, int minute) {
   var t = DateTime(now.year, now.month, now.day, hour, minute);
-  if (!t.isAfter(now)) t = t.add(const Duration(days: 1));
+  // Roll to the same wall-clock time tomorrow. The DateTime constructor keeps
+  // the local hour across a DST boundary; add(Duration(days: 1)) would add a
+  // flat 24h and fire an hour off on the two transition days each year.
+  if (!t.isAfter(now)) t = DateTime(now.year, now.month, now.day + 1, hour, minute);
   return t;
 }
 

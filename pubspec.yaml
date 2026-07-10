@@ -31,21 +31,13 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
-
   # State management
   flutter_riverpod: ^2.6.1
 
   # macOS native integration
   window_manager: ^0.4.3      # frameless floating panel, show/hide/focus
-  screen_retriever: ^0.2.0    # place the panel on the active display
-  tray_manager: ^0.3.2        # menu-bar status item + live countdown title
+  tray_manager: ^0.3.2        # menu-bar icon + context menu
   hotkey_manager: ^0.2.3      # global Escape hotkey (scoped to ringing)
-  flutter_acrylic: ^1.1.4     # macOS window vibrancy (best-effort)
-  dynamic_notch:              # macOS notch / Dynamic Island overlay
-    git:
-      url: https://github.com/0xharkirat/dynamic_notch.git
-      ref: main
 
   # Audio + files
   audioplayers: ^6.1.0

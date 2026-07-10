@@ -41,7 +41,6 @@ Future<void> main() async {
     await windowManager.setVisibleOnAllWorkspaces(true, visibleOnFullScreen: true);
     await windowManager.setResizable(false);
     await native.configurePanel();         // real transparency (after setAsFrameless)
-    await native.positionOnActiveScreen();  // place on the display under the cursor
   });
 
   container.read(timerEngineProvider); // wire native callbacks

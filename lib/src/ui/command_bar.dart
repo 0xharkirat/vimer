@@ -127,9 +127,6 @@ class _CommandBarState extends ConsumerState<CommandBar>
       case '?':
         ref.read(helpOpenProvider.notifier).state = true;
         return true;
-      case 'notch':
-        ref.read(nativeServiceProvider).toggleNotch();
-        return true;
       default:
         return false;
     }
@@ -174,7 +171,12 @@ class _CommandBarState extends ConsumerState<CommandBar>
   @override
   Widget build(BuildContext context) {
     ref.listen(settingsSheetOpenProvider, (prev, next) {
-      if (prev == true && next == false) _refocus();
+      if (prev == true && next == false) {
+        // Any settings-close path (incl. Cmd+, toggling the sheet shut) must
+        // release the panel pin, or auto-hide stays disabled for the session.
+        ref.read(panelPinnedProvider.notifier).state = false;
+        _refocus();
+      }
     });
     // When Help closes, return to the input - unless a timer is selected, in
     // which case the list reclaims focus (see timer_list.dart).
